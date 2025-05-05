@@ -1,9 +1,14 @@
 <?php
+//1. dipindahkan, awalnya didalam sendJsonResponse diatas echo json encode
+header("Content-Type: application/json");
 session_start();
 require_once("config.php");
 
+//2. kita ambil input an dari frontend berupa json, dan kita decode jadi array assoc
+$rawData = file_get_contents("php://input");
+$dt = json_decode($rawData, true);
+
 function sendJsonResponse($status, $message, $data = []){
-    header("Content-Type: application/json");
     echo json_encode([
         'status' => $status,
         'message' => $message,
@@ -52,7 +57,7 @@ function loginUser($connection, $email, $password){
 
 function checkLogin(){
     if(isset($_SESSION['account_logged_in']) && $_SESSION['account_logged_in'] === true){
-        sendJsonResponse("Success", "User has successfully logged in", [
+        sendJsonResponse("success", "User has successfully logged in", [
             "status" => true,
             "email" => $_SESSION['account_email'],
             "id" => $_SESSION['account_id']
@@ -64,10 +69,13 @@ function checkLogin(){
 }
 
 if($_SERVER['REQUEST_METHOD'] === "POST"){
-    if(isset($_POST['email'], $_POST['password'])){
-        loginUser($connection, $_POST['email'], $_POST['password']);
+    //3. buat baru dengan dt, yang lama komentarin aja
+    if(!isset($dt['email'], $dt['password']) || $dt['email'] === "" || $dt['password'] === ""){
+        //4. ini aslinya dari userLogin bagian atas, skrng dipindah agar di cek dan tampilkan disini
+        sendJsonResponse("Error", "Username or Password is empty");
     }
-    sendJsonResponse("error", "missing post value");
+    //5. kita ambil dari yang lama dibawah, lalu ubah agar menggunakan dt
+    loginUser($connection, $dt['email'], $dt['password']);
 } else if(($_SERVER['REQUEST_METHOD'] === "GET")){
     checkLogin();
 }else {
